@@ -9,6 +9,9 @@ Eventually we will have a config file where we can declare all this, for now jus
 
 Note the MySQL & Reddit config is in utils.py, you will need this information before you can use the bot.
 
+Also note you will need to run the python programs in some kind of loop, in bash I just do this:
+> while true; do /usr/bin/python /home/monotoko/build/reddit/tipbot.py; sleep 15; done
+
 # Testing
 
 Happy to accept pull requests, especially people good with automated testing. It took me hours to manually test this, hours!

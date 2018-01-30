@@ -70,7 +70,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
     def give_user_the_tip(self,sender,receiver,addamt,bank,mention): #o.o
         if addamt >= bank+Decimal(0.01):
             try:
-                self.logger.logline("%s had %s and tried to give %s. Failed." % (sender,bank,addamt))
+                self.logger.logline("%s had %s and tried to give %s. Failed due to not having enough in bank." % (sender,bank,addamt))
                 self.reddit.comment(id=mention.id).reply("Sorry! You don't have enough in your account and we aren't a garlic bank! PM me with the word 'deposit' and I will send you instructions to get more delicious garlic into your account.")
                 return 2
             except:
@@ -83,7 +83,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                 self.modify_user_balance("+",receiver,addamt)
                 mstr = str(receiver)+" "+str(addamt) #Probably no need for this, holdover from recode.
                 try:
-                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s garlicoin, hopefully they can now create some tasty garlic bread." % (mstr))
+                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s garlicoin, hopefully they can now create some tasty garlic bread.\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=ktechmidas)" % (mstr))
                 except:
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment for existing user.")
                     #traceback.print_exc()
@@ -91,7 +91,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                 self.create_account(receiver)
                 self.modify_user_balance("+",receiver,addamt)
                 try:
-                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s %s garlicoin, hopefully they can now create some tasty garlic bread. If %s doesn't know what it is, they should read [this thread](https://www.reddit.com/r/garlicoin/comments/7smsu0/introducing_ugarlictipsbot/)" % (receiver, addamt, receiver))
+                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s %s garlicoin, hopefully they can now create some tasty garlic bread. If %s doesn't know what it is, they should read [this thread](https://www.reddit.com/r/garlicoin/comments/7smsu0/introducing_ugarlictipsbot/)\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=ktechmidas)" % (receiver, addamt, receiver))
                     self.utils.send_message(receiver,'Welcome to Garlicoin',"%s gave you some Garlicoin, we have added your new found riches to an account in your name on garlictipsbot. You can get the balance by messaging this bot with the word balance on it's own (in a new message, not as a reply to this one!) \n\nYou can also send tips to others or withdraw to your own garlicoin wallet. If there are any issues please PM /u/ktechmidas" % mention.author)
                 except:
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment & sendmsg for new user.")
@@ -143,6 +143,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
             if mention.new == True:
                 unread.append(mention)
                 try:
+                    self.logger.logline("Processing mention: %s by %s" % (mention.id,mention.author)) 
                     self.process_mention(mention)
                 except:
                     self.reddit.comment(id=mention.id).reply("Oops, something went wrong. Do you have an account with the bot? If not send 'signup' to me by PM. If you do have an account I may be having issues, please try again later.")
@@ -165,7 +166,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
         #print('{}\n{}\n'.format(mention.author, mention.body))
         self.logger.logline('{}\n{}\n'.format(mention.author, mention.body))
         todo = mention.body.split()
-        needle = todo.index("/u/grlctipsbottest") #Need to find this in multiple ways, currently tripping on u/ and capital letters.
+        needle = todo.index("/u/garlictipsbot") #Need to find this in multiple ways, currently tripping on u/ and capital letters.
         sender = mention.author
         addamt = todo[needle+1]
         receiver = todo[needle+2]
@@ -185,6 +186,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
         #First we check whether the user wants to signup, if so let's process that...
         command = command.lower()
         author = message.author
+        self.logger.logline("%s issued command %s" % (author,command))
         userexists = self.does_user_exist(author)
         if command != "signup" and userexists == 0:
             message.reply("Hi! This bot doesn't know who you are. Please PM the word 'signup' in a new message if you would like to start using the bot. If you think you should have a balance here please PM my carer /u/ktechmidas")
@@ -197,6 +199,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                 message.reply("Hi. You already have an account so we cannot sign you up again. Please send the word balance in a new message to /u/garlictipsbot to find your balance")
         elif command == "balance":
             balance = self.get_amount_for_user(author)
+            self.logger.logline("%s requested their balance. AMT: %s" % (author,balance))
             message.reply("Your balance is %s" % balance)
         elif command == "deposit":
             self.new_deposit(author)
@@ -211,9 +214,11 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
         author = message.author
         userexists = self.does_user_exist(author)
         if userexists == 0:
+            self.logger.logline("%s tried to issue command %s while not signed up" % (author,command))
             message.reply("Hi! This bot doesn't know who you are. Please PM the word 'signup' in a new message if you would like to start using the bot. If you think you should have a balance here please PM my carer /u/ktechmidas")
         msgsplit = message.body.split()
         msgsplit[0] = msgsplit[0].lower()
+        self.logger.logline("%s issued command %s" % (author,message.body))
         if msgsplit[0] == "withdraw":
             try:
                 address = msgsplit[1]
@@ -234,6 +239,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                     self.logger.logline("%s has a new withdrawal waiting. AMT: %s" % (author,amt))
                     return 0
                 else:
+                    self.logger.logline("%s tried to withdraw more than was in their account, AMT: %s" % (author,amt))
                     message.reply("Oops, you tried to withdraw more than is in your account. Please send a message with the word 'balance' to get your current balance")
                     return 1
             except:
@@ -292,7 +298,6 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
         #First we check any mentions in comments so we can do the tipping, then check the private messages of the bot.
         self.check_mentions()
         self.check_messages()
-
         print("Done, next round in 15")
 
 

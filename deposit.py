@@ -8,20 +8,16 @@ from decimal import *
 import subprocess
 import shlex
 import argparse
+from utils import utils
 
 class deposit():
         
     def __init__(self):
         #Set up MySQL cursor
-        db = MySQLdb.connect(host="localhost", port=3306, user="xxxx", passwd="xxxx", db="tipbot")
-        db.autocommit(True)
         self.debug = 1
-        self.cursor = db.cursor()
-        self.reddit = praw.Reddit(client_id='xxxx',
-                        client_secret='xxxx',
-                        password='xxxx',
-                        user_agent='xxxx',
-                        username='xxxx')
+        self.utils = utils()
+        self.reddit = self.utils.connect_to_reddit()
+        self.cursor = self.utils.get_mysql_cursor()
 
     def checks(self):
         me = reddit.user.me()

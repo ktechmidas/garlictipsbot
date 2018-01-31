@@ -83,7 +83,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                 self.modify_user_balance("+",receiver,addamt)
                 mstr = str(receiver)+" "+str(addamt) #Probably no need for this, holdover from recode.
                 try:
-                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s garlicoin, hopefully they can now create some tasty garlic bread.\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=ktechmidas)" % (mstr))
+                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s garlicoin, hopefully they can now create some tasty garlic bread.\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=garlictipsbot&subject=help&message=help)" % (mstr))
                 except:
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment for existing user.")
                     #traceback.print_exc()
@@ -91,7 +91,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                 self.create_account(receiver)
                 self.modify_user_balance("+",receiver,addamt)
                 try:
-                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s %s garlicoin, hopefully they can now create some tasty garlic bread. If %s doesn't know what it is, they should read [this thread](https://www.reddit.com/r/garlicoin/comments/7smsu0/introducing_ugarlictipsbot/)\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=ktechmidas)" % (receiver, addamt, receiver))
+                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s %s garlicoin, hopefully they can now create some tasty garlic bread. If %s doesn't know what it is, they should read [this thread](https://www.reddit.com/r/garlicoin/comments/7smsu0/introducing_ugarlictipsbot/)\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=garlictipsbot&subject=help&message=help)" % (receiver, addamt, receiver))
                     self.utils.send_message(receiver,'Welcome to Garlicoin',"%s gave you some Garlicoin, we have added your new found riches to an account in your name on garlictipsbot. You can get the balance by messaging this bot with the word balance on it's own (in a new message, not as a reply to this one!) \n\nYou can also send tips to others or withdraw to your own garlicoin wallet. If there are any issues please PM /u/ktechmidas" % mention.author)
                 except:
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment & sendmsg for new user.")

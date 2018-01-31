@@ -9,6 +9,7 @@ import subprocess
 import shlex
 import argparse
 from utils import utils
+#from tipbot import logger
 
 class deposit():
         
@@ -16,6 +17,7 @@ class deposit():
         #Set up MySQL cursor
         self.debug = 1
         self.utils = utils()
+        #self.logger = logger()
         self.reddit = self.utils.connect_to_reddit()
         self.cursor = self.utils.get_mysql_cursor()
 
@@ -40,7 +42,7 @@ class deposit():
             newtx = self.get_amount_from_json(qcheck,tx_in_db)
             if self.debug:
                 print "More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s" % (tx_in_db, txamount, username, newtx)
-            
+            #self.logger.logline("Deposit: More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s" % (tx_in_db, txamount, username, newtx))
             sql = "UPDATE deposits SET txs=txs+1 WHERE username='%s'" % (username)
             self.cursor.execute(sql)
 
@@ -65,6 +67,7 @@ class deposit():
         result = self.all_deposits()
 
         for row in result:
+            #pdb.set_trace()
             username = row[1]
             tx_in_db = row[5]
             amt = self.check_deposits(username,tx_in_db)

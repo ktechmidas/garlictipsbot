@@ -38,8 +38,8 @@ class tipbot():
 To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
 
     def does_user_exist(self,username):
-        sql = "SELECT * FROM amounts WHERE username='%s'"
-        self.cursor.execute(sql, (username))
+        sql = "SELECT * FROM amounts WHERE username=%s"
+        self.cursor.execute(sql, (username,))
         result = self.cursor.fetchone()
         if not result:
             return 0
@@ -51,21 +51,21 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
             self.logger.logline("%s tried to use a negative number!" % (username))
             raise Exception
         if pn == "+":
-            sql = "UPDATE amounts SET amount=amount+%s WHERE username='%s'"
+            sql = "UPDATE amounts SET amount=amount+%s WHERE username=%s"
             self.logger.logline("%s's balance has been credited by %s" % (username,amt))
         elif pn == "-":
-            sql = "UPDATE amounts SET amount=amount-%s WHERE username='%s'"
+            sql = "UPDATE amounts SET amount=amount-%s WHERE username=%s"
             self.logger.logline("%s's balance has been deducted by %s" % (username,amt))
         else:
             self.logger.logline("modify_user_balance got strange request. Aborting")
             return 1
-        self.cursor.execute(sql, (amt,username))
+        self.cursor.execute(sql, (amt,username,))
         return 0
 
     def new_withdrawal_request(self,username,address,amount):
         self.modify_user_balance("-",username,amount)
-        sql = "INSERT INTO withdraw (username, address, amount, confirmed) VALUES ('%s', '%s', '%s', 0)"
-        self.cursor.execute(sql, (username,address,amount))
+        sql = "INSERT INTO withdraw (username, address, amount, confirmed) VALUES (%s, %s, %s, 0)"
+        self.cursor.execute(sql, (username,address,amount,))
 
     def give_user_the_tip(self,sender,receiver,addamt,bank,mention): #o.o
         if addamt >= bank+Decimal(0.01):
@@ -126,15 +126,15 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment & sendmsg for new user.")
 
     def new_deposit(self,username): #If the user hasn't deposited with us before, he gets a flag created, else just do nothing because the flag is already there.
-        sql = "SELECT * FROM deposits WHERE username='%s'"
-        self.cursor.execute(sql, (username))
+        sql = "SELECT * FROM deposits WHERE username=%s"
+        self.cursor.execute(sql, (username,))
         if not self.cursor.rowcount:
-            sql = "INSERT INTO deposits (username, confirmed, amount, txs) VALUES ('%s', %s, 0, 0)"
-            self.cursor.execute(sql (username, 0))
+            sql = "INSERT INTO deposits (username, confirmed, amount, txs) VALUES (%s, %s, 0, 0)"
+            self.cursor.execute(sql (username, 0,))
     
     def get_amount_for_user(self,username):
-        sql = "SELECT * FROM amounts WHERE username='%s'"
-        self.cursor.execute(sql, (username))
+        sql = "SELECT * FROM amounts WHERE username=%s"
+        self.cursor.execute(sql, (username,))
         return Decimal(self.cursor.fetchone()[1])
 
     def check_mentions(self):
@@ -146,18 +146,18 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                     self.logger.logline("Processing mention: %s by %s" % (mention.id,mention.author)) 
                     self.process_mention(mention)
                 except:
-                    self.reddit.comment(id=mention.id).reply("Oops, something went wrong. Do you have an account with the bot? If not send 'signup' to me by PM. If you do have an account I may be having issues, please try again later.")
-                    #traceback.print_exc()
+                    #self.reddit.comment(id=mention.id).reply("Oops, something went wrong. Do you have an account with the bot? If not send 'signup' to me by PM. If you do have an account I may be having issues, please try again later.")
+                    traceback.print_exc()
         self.reddit.inbox.mark_read(unread)
         del unread[:] #Probably not needed after the recode, since it's a local var, but still good to clean up I suppose....
     
     def create_account(self,username):
-        sql = "INSERT INTO amounts VALUES ('%s', 0)"
-        self.cursor.execute(sql, (username))
+        sql = "INSERT INTO amounts VALUES (%s, 0)"
+        self.cursor.execute(sql, (username,))
 
     def add_history_entry(self,sender,receiver,amt,mention):
-        sql = "INSERT INTO history (sender, recv, amount, mention) VALUES ('%s', '%s', %s, '%s')"
-        self.cursor.execute(sql, (sender,receiver,amt,mention))
+        sql = "INSERT INTO history (sender, recv, amount, mention) VALUES (%s, %s, %s, %s)"
+        self.cursor.execute(sql, (sender,receiver,amt,mention,))
 
     def get_new_address(self,username):
         return subprocess.check_output(shlex.split('/home/monotoko/garlic/garlicoin/bin/garlicoin-cli getnewaddress %s' % (username)))

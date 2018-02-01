@@ -43,11 +43,11 @@ class deposit():
             if self.debug:
                 print "More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s" % (tx_in_db, txamount, username, newtx)
             #self.logger.logline("Deposit: More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s" % (tx_in_db, txamount, username, newtx))
-            sql = "UPDATE deposits SET txs=txs+1 WHERE username='%s'" % (username)
-            self.cursor.execute(sql)
+            sql = "UPDATE deposits SET txs=txs+1 WHERE username='%s'"
+            self.cursor.execute(sql, (username))
 
-            sql = "UPDATE amounts SET amount=amount+%s WHERE username='%s'" % (newtx, username)
-            self.cursor.execute(sql)
+            sql = "UPDATE amounts SET amount=amount+%s WHERE username='%s'"
+            self.cursor.execute(sql, (newtx,username))
             return newtx
         else:
             return 0

@@ -17,8 +17,8 @@ class withdraw():
 
 
     def set_confirmed(self,username):
-         sql = "UPDATE withdraw SET confirmed=1 WHERE username='%s'" % username
-         self.cursor.execute(sql)
+         sql = "UPDATE withdraw SET confirmed=1 WHERE username='%s'"
+         self.cursor.execute(sql, (username))
 
     def process_withdrawal(self,address,amount, username):
         if amount.startswith("."):

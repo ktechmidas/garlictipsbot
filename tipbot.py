@@ -38,8 +38,8 @@ class tipbot():
 To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
 
     def does_user_exist(self,username):
-        sql = "SELECT * FROM amounts WHERE username='%s'" % (username)
-        self.cursor.execute(sql)
+        sql = "SELECT * FROM amounts WHERE username='%s'"
+        self.cursor.execute(sql, (username))
         result = self.cursor.fetchone()
         if not result:
             return 0
@@ -51,21 +51,21 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
             self.logger.logline("%s tried to use a negative number!" % (username))
             raise Exception
         if pn == "+":
-            sql = "UPDATE amounts SET amount=amount+%s WHERE username='%s'" % (amt,username)
+            sql = "UPDATE amounts SET amount=amount+%s WHERE username='%s'"
             self.logger.logline("%s's balance has been credited by %s" % (username,amt))
         elif pn == "-":
-            sql = "UPDATE amounts SET amount=amount-%s WHERE username='%s'" % (amt,username)
+            sql = "UPDATE amounts SET amount=amount-%s WHERE username='%s'"
             self.logger.logline("%s's balance has been deducted by %s" % (username,amt))
         else:
             self.logger.logline("modify_user_balance got strange request. Aborting")
             return 1
-        self.cursor.execute(sql)
+        self.cursor.execute(sql, (amt,username))
         return 0
 
     def new_withdrawal_request(self,username,address,amount):
         self.modify_user_balance("-",username,amount)
-        sql = "INSERT INTO withdraw (username, address, amount, confirmed) VALUES ('%s', '%s', '%s', 0)" % (username, address, amount)
-        self.cursor.execute(sql)
+        sql = "INSERT INTO withdraw (username, address, amount, confirmed) VALUES ('%s', '%s', '%s', 0)"
+        self.cursor.execute(sql, (username,address,amount))
 
     def give_user_the_tip(self,sender,receiver,addamt,bank,mention): #o.o
         if addamt >= bank+Decimal(0.01):
@@ -83,7 +83,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                 self.modify_user_balance("+",receiver,addamt)
                 mstr = str(receiver)+" "+str(addamt) #Probably no need for this, holdover from recode.
                 try:
-                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s garlicoin, hopefully they can now create some tasty garlic bread.\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=garlictipsbot&subject=help&message=help)" % (mstr))
+                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s garlicoin, hopefully they can now create some tasty garlic bread.\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=garlictipsbot&subject=help&message=help) ^^|| [^^Dogecoin ^^partnership ^^coming ^^soon](https://www.reddit.com/r/garlicoin/comments/7u0z1w/garlictipsbot_recodeopen_sourceimportant_news/)" % (mstr))
                 except:
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment for existing user.")
                     #traceback.print_exc()
@@ -91,7 +91,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                 self.create_account(receiver)
                 self.modify_user_balance("+",receiver,addamt)
                 try:
-                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s %s garlicoin, hopefully they can now create some tasty garlic bread. If %s doesn't know what it is, they should read [this thread](https://www.reddit.com/r/garlicoin/comments/7smsu0/introducing_ugarlictipsbot/)\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=garlictipsbot&subject=help&message=help)" % (receiver, addamt, receiver))
+                    self.reddit.comment(id=mention.id).reply("Yay! You gave /u/%s %s garlicoin, hopefully they can now create some tasty garlic bread. If %s doesn't know what it is, they should read [this thread](https://www.reddit.com/r/garlicoin/comments/7smsu0/introducing_ugarlictipsbot/)\n***\n^^Wow ^^so ^^tasty ^^|| ^^Did ^^you ^^know ^^I'm ^^now ^^open ^^source? [^^click ^^here](https://github.com/ktechmidas/garlictipsbot/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=garlictipsbot&subject=help&message=help) ^^|| [^^Dogecoin ^^partnership ^^coming ^^soon](https://www.reddit.com/r/garlicoin/comments/7u0z1w/garlictipsbot_recodeopen_sourceimportant_news/)" % (receiver, addamt, receiver))
                     self.utils.send_message(receiver,'Welcome to Garlicoin',"%s gave you some Garlicoin, we have added your new found riches to an account in your name on garlictipsbot. You can get the balance by messaging this bot with the word balance on it's own (in a new message, not as a reply to this one!) \n\nYou can also send tips to others or withdraw to your own garlicoin wallet. If there are any issues please PM /u/ktechmidas" % mention.author)
                 except:
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment & sendmsg for new user.")
@@ -126,15 +126,15 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment & sendmsg for new user.")
 
     def new_deposit(self,username): #If the user hasn't deposited with us before, he gets a flag created, else just do nothing because the flag is already there.
-        sql = "SELECT * FROM deposits WHERE username='%s'" % username
-        self.cursor.execute(sql)
+        sql = "SELECT * FROM deposits WHERE username='%s'"
+        self.cursor.execute(sql, (username))
         if not self.cursor.rowcount:
-            sql = "INSERT INTO deposits (username, confirmed, amount, txs) VALUES ('%s', %s, 0, 0)" % (indmessage.author, 0)
-            self.cursor.execute(sql)
+            sql = "INSERT INTO deposits (username, confirmed, amount, txs) VALUES ('%s', %s, 0, 0)"
+            self.cursor.execute(sql (username, 0))
     
     def get_amount_for_user(self,username):
-        sql = "SELECT * FROM amounts WHERE username='%s'" % (username)
-        self.cursor.execute(sql)
+        sql = "SELECT * FROM amounts WHERE username='%s'"
+        self.cursor.execute(sql, (username))
         return Decimal(self.cursor.fetchone()[1])
 
     def check_mentions(self):
@@ -152,12 +152,12 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
         del unread[:] #Probably not needed after the recode, since it's a local var, but still good to clean up I suppose....
     
     def create_account(self,username):
-        sql = "INSERT INTO amounts VALUES ('%s', 0)" % (username)
-        self.cursor.execute(sql)
+        sql = "INSERT INTO amounts VALUES ('%s', 0)"
+        self.cursor.execute(sql, (username))
 
     def add_history_entry(self,sender,receiver,amt,mention):
-        sql = "INSERT INTO history (sender, recv, amount, mention) VALUES ('%s', '%s', %s, '%s')" % (sender, receiver, amt, mention)
-        self.cursor.execute(sql)
+        sql = "INSERT INTO history (sender, recv, amount, mention) VALUES ('%s', '%s', %s, '%s')"
+        self.cursor.execute(sql, (sender,receiver,amt,mention))
 
     def get_new_address(self,username):
         return subprocess.check_output(shlex.split('/home/monotoko/garlic/garlicoin/bin/garlicoin-cli getnewaddress %s' % (username)))

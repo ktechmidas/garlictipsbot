@@ -129,8 +129,8 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
         sql = "SELECT * FROM deposits WHERE username=%s"
         self.cursor.execute(sql, (username,))
         if not self.cursor.rowcount:
-            sql = "INSERT INTO deposits (username, confirmed, amount, txs) VALUES (%s, %s, 0, 0)"
-            self.cursor.execute(sql (username, 0,))
+            sql = "INSERT INTO deposits (username, confirmed, amount, txs) VALUES (%s, 0, 0, 0)"
+            self.cursor.execute(sql, (username,))
     
     def get_amount_for_user(self,username):
         sql = "SELECT * FROM amounts WHERE username=%s"

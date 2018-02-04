@@ -35,7 +35,9 @@ class tipbot():
 * withdraw [address] [amount] - Will withdraw the amount you request into the address you request.\n
 * tip [amount] [user] - Tips the user with the amount you request.\n\n
 
-To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
+To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply.\n\n
+
+If you need any further assistance please PM my creator, /u/ktechmidas"""
 
     def does_user_exist(self,username):
         sql = "SELECT * FROM amounts WHERE username=%s"
@@ -204,7 +206,7 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply."""
         elif command == "deposit":
             self.new_deposit(author)
             addy = self.get_new_address(author)
-            message.reply("Hi! Our cooks have generated a deposit address just for you, it is: %s \n\n Once you have sent some garlicoin please be patient while it appears in your account.\n\n **NOTE:** Changes have been made. New deposit system should be running, please let /u/ktechmidas know if there are any issues." % (addy))
+            message.reply("Hi! Our cooks have generated a deposit address just for you, it is: %s \n\n Once you have sent some garlicoin please be patient while it appears in your account.\n\n **NOTE:** You may have to wait 10-15 minutes after depositing due to the way I check deposits, this may be changing soon." % (addy))
         elif command == "help":
             message.reply(self.help)
         else:

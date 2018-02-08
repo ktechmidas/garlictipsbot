@@ -170,7 +170,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         self.cursor.execute(sql, (sender,receiver,amt,mention,))
 
     def get_new_address(self,username):
-        return subprocess.check_output(shlex.split('/home/monotoko/garlic/garlicoin/bin/garlicoin-cli getnewaddress %s' % (username)))
+        return subprocess.check_output(shlex.split('%s/%s-cli getnewaddress %s' % (self.utils.config['other']['full_dir'],self.utils.config['other']['crypto'],username)))
 
     def process_mention(self,mention):
         #print('{}\n{}\n'.format(mention.author, mention.body))

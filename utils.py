@@ -12,10 +12,12 @@ import argparse
 class utils():
 
     def __init__(self):
+        with open('config.json', 'r') as f:
+            self.config = json.load(f)
         self.debug = 1
 
     def get_mysql_cursor(self):
-        db = MySQLdb.connect(host="localhost", port=3306, user="xxxx", passwd="xxxx", db="tipbot")
+        db = MySQLdb.connect(host=self.config['mysql']['host'], port=3306, user=self.config['mysql']['user'], passwd=self.config['mysql']['passwd'], db=self.config['mysql']['db'])
         db.autocommit(True)
         cursor = db.cursor()
         return cursor

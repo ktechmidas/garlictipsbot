@@ -12,6 +12,7 @@ import argparse
 import random
 from utils import utils
 import datetime
+import re
 
 class logger():
 
@@ -47,6 +48,13 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             return 0
         else:
             return 1
+
+    def check_address(self,address):
+        #Here we check the address is correct, some users like to give us LTC addresses occasionally...
+        if re.search('^G[a-zA-Z0-9]{33}$',address):
+            return True
+        else:
+            return False
 
     def modify_user_balance(self,pn,username,amt):
         if amt < 0:
@@ -232,12 +240,13 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                 self.logger.logline("%s sent invalid amount" % (author))
                 return 1
             try:
+                self.check_address(address)
                 amtleft = self.get_amount_for_user(author)
                 ##amtleft = Decimal(self.cursor.fetchone()[1])
                 
                 if amt <= amtleft:
                     self.new_withdrawal_request(author,address,amt)
-                    message.reply("Hi, your withdrawal request has been accepted! Please note that for the first few days, this is a manual process. PM my carer /u/ktechmidas if you need it urgently.")
+                    message.reply("Hi, your withdrawal request has been accepted! Please note this is a manual process for now. PM my carer /u/ktechmidas if you need it urgently.")
                     self.logger.logline("%s has a new withdrawal waiting. AMT: %s" % (author,amt))
                     return 0
                 else:
@@ -245,7 +254,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                     message.reply("Oops, you tried to withdraw more than is in your account. Please send a message with the word 'balance' to get your current balance")
                     return 1
             except:
-                message.reply("It appears you tried to send a withdrawal request, but we couldn't figure out the format. Please resend it as 'withdraw address amount'")
+                message.reply("It appears you tried to send a withdrawal request, but we couldn't figure out the format. Please resend it as 'withdraw address amount' - It's also possible you gave an invalid Garlicoin address, please check it.")
                 traceback.print_exc()
         elif msgsplit[0] == "tip":
             #The user wants to tip another privately, that's cool, we can do that too.

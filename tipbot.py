@@ -240,7 +240,8 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                 self.logger.logline("%s sent invalid amount" % (author))
                 return 1
             try:
-                self.check_address(address)
+                if not self.check_address(address):
+                    raise Exception #Objection!
                 amtleft = self.get_amount_for_user(author)
                 ##amtleft = Decimal(self.cursor.fetchone()[1])
                 

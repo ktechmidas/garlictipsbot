@@ -320,7 +320,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             crypto_to = msgsplit[4].upper()
             amount = msgsplit[1]
             pair = "%s/%s" % (crypto_from,crypto_to)
-            sql = "SELECT * FROM rates WHERE pair=%s" % (pair)
+            sql = "SELECT * FROM rates WHERE pair='%s'" % (pair)
             self.cursor.execute(sql)
             result = self.cursor.fetchone()
             if not result:

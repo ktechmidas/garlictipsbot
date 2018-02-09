@@ -318,7 +318,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         elif msgsplit[0] == "exchange":
             crypto_from = msgsplit[2].upper()
             crypto_to = msgsplit[4].upper()
-            amount = msgsplit[1]
+            amount = Decimal(msgsplit[1])
             pair = "%s/%s" % (crypto_from,crypto_to)
             sql = "SELECT * FROM rates WHERE pair='%s'" % (pair)
             self.cursor.execute(sql)
@@ -326,21 +326,21 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             if not result:
                 message.reply("The currency you want to exchange from or to is unavailable at this time. This could be due to suspension of trading or non-supported currency pairs.")
                 raise Exception
-            rate = result[2] #10 GRLC to Dash is 0.0045
+            rate = Decimal(result[2]) #10 GRLC to Dash is 0.0045
             amttoconvertto = amount * rate
 
             if crypto_from == "GRLC":
                 balance = self.get_amount_for_user(author)
-                if balance+0.1 > amount:
+                if balance+Decimal(0.1) > amount:
                     self.modify_user_balance('-',author,amount)
                     self.modify_user_balance('+',author,amttoconvertto,crypto_to)
-                    message.reply("Hi, your %s GRLC has successfully been converted to %s Dash at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas")
+                    message.reply("Hi, your %s GRLC has successfully been converted to %s Dash at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas" % (amount,amttoconvertto,rate))
             elif crypto_from == "DASH":
                 balance = self.get_dash_for_user(author)
-                if balance+0.00001 > amount:
+                if balance+Decimal(0.00001) > amount:
                     self.modify_user_balance('-',author,amount,'DASH')
                     self.modify_user_balance('+',author,amttoconvertto)
-                    message.reply("Hi, your %s Dash has successfully been converted to %s GRLC at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas")
+                    message.reply("Hi, your %s Dash has successfully been converted to %s GRLC at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas" % (amount,amttoconvertto,rate))
 
 
 

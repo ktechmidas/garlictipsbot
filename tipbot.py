@@ -50,9 +50,6 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         else:
             return 1
 
-    def get_rates(self):
-        
-
     def check_supported_coin(self,coin):
         supported = ['garlicoin','dash']
         if coin in supported:
@@ -333,7 +330,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                     message.reply("Hi, your %s GRLC has successfully been converted to %s Dash at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas")
             elif crypto_from == "DASH":
                 balance = self.get_dash_for_user(author)
-                if balance+0.00001 > amount
+                if balance+0.00001 > amount:
                     self.modify_user_balance('-',author,amount,'DASH')
                     self.modify_user_balance('+',author,amttoconvertto)
                     message.reply("Hi, your %s Dash has successfully been converted to %s GRLC at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas")

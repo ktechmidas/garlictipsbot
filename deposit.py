@@ -48,8 +48,12 @@ class deposit():
             sql = "UPDATE deposits SET txs=txs+1 WHERE username=%s"
             self.cursor.execute(sql, (username,))
 
-            sql = "UPDATE amounts SET amount=amount+%s WHERE username=%s"
-            self.cursor.execute(sql, (newtx,username,))
+            if coin == "garlicoin":
+                sql = "UPDATE amounts SET amount=amount+%s WHERE username=%s"
+                self.cursor.execute(sql, (newtx,username,))
+            elif coin == "dash":
+                sql = "UPDATE amounts SET dashamt=dashamt+%s WHERE username=%s"
+                self.cursor.execute(sql, (newtx,username,))
             return newtx
         else:
             return 0

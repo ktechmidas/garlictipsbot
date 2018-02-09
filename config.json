@@ -13,7 +13,10 @@
         "username":"xxxx"
     },
     "other":{
-        "full_dir":"/home/ubuntu/garlicoin/bin/",
-        "crypto":"garlicoin"
+        "full_dir":"/home/ubuntu/",
+        "cryptos": { 
+            "1":"garlicoin",
+            "2":"dash"
+        }
     }
 }

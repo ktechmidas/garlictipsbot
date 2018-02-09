@@ -21,7 +21,7 @@ class withdraw():
          sql = "UPDATE withdraw SET confirmed=1 WHERE username=%s"
          self.cursor.execute(sql, (username,))
 
-    def process_withdrawal(self,address,amount, username):
+    def process_withdrawal(self,address,amount,username):
         if amount.startswith("."):
             amount = "0"+amount
             #pdb.set_trace()

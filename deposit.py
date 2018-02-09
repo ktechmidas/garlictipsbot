@@ -42,11 +42,11 @@ class deposit():
             #We have a TX that has not been credited yet
             newtx = self.get_amount_from_json(qcheck,tx_in_db)
             if self.debug:
-                print "More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s" % (tx_in_db, txamount, username, newtx)
+                print "More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s - COIN: %s" % (tx_in_db, txamount, username, newtx, coin)
             
             #self.logger.logline("Deposit: More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s" % (tx_in_db, txamount, username, newtx))
-            sql = "UPDATE deposits SET txs=txs+1 WHERE username=%s"
-            self.cursor.execute(sql, (username,))
+            sql = "UPDATE deposits SET txs=txs+1 WHERE username=%s AND coin=%s"
+            self.cursor.execute(sql, (username,coin,))
 
             if coin == "garlicoin":
                 sql = "UPDATE amounts SET amount=amount+%s WHERE username=%s"

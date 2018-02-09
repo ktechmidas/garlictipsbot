@@ -183,7 +183,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         sql = "SELECT * FROM deposits WHERE username=%s AND coin=%s"
         self.cursor.execute(sql, (username,coin,))
         if not self.cursor.rowcount:
-            sql = "INSERT INTO deposits (username, confirmed, amount, txs, coin) VALUES (%s, 0, 0, 0, %s)"
+            sql = "INSERT INTO deposits (username, amount, txs, coin) VALUES (%s, 0, 0, %s)"
             self.cursor.execute(sql, (username,coin,))
     
     def get_amount_for_user(self,username):

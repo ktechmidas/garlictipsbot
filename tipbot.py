@@ -271,7 +271,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             message.reply(self.help)
         elif command == "rates":
             amt = self.get_rates()
-            message.reply("The current rate is \n[Dash/GRLC <>  %s]" % (amt))
+            message.reply("The current rate is \n[Dash/GRLC <>  %s]" % (round(amt,2)))
         else:
             message.reply("Sorry! I did not understand the command you gave. Please write a new PM (not reply) with help and I will reply with what I accept.")
 

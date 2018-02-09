@@ -184,6 +184,13 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         #Ensure we don't have /u/ on receiver
         if receiver.count("/u/") == 1:
             receiver = receiver.replace(receiver[:3],'')
+
+        try:
+            fullname = self.reddit.redditor(receiver).fullname
+        except prawcore.exceptions.NotFound:
+            self.logger.logline('{} tried to tip {} but there is no user by that name'.format(sender, receiver))
+            return
+            
         addamt = Decimal(addamt)
 
         bank = self.get_amount_for_user(sender)

@@ -41,6 +41,13 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply.\n\n
 
 If you need any further assistance please PM my creator, /u/ktechmidas"""
 
+    def get_rates(self):
+        sql = "SELECT * FROM rates WHERE pair='%s'" % ("DASH/GRLC")
+        self.cursor.execute(sql)
+        result = self.cursor.fetchone()
+        return result[2]
+        
+
     def does_user_exist(self,username):
         sql = "SELECT * FROM amounts WHERE username=%s"
         self.cursor.execute(sql, (username,))

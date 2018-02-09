@@ -55,6 +55,10 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         else:
             return 2
 
+    def add_user_to_giveaway(self,username):
+        sql = "INSERT INTO giveaway (username) VALUES (%s)"
+        self.cursor.execute(sql, (username,))
+
     def get_rates(self):
         sql = "SELECT * FROM rates WHERE pair='%s'" % ("DASH/GRLC")
         self.cursor.execute(sql)
@@ -286,16 +290,19 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         elif command == "rates":
             amt = self.get_rates()
             message.reply("The current rate is \n[Dash/GRLC <>  %s]" % (round(amt,2)))
-        else:
-            message.reply("Sorry! I did not understand the command you gave. Please write a new PM (not reply) with help and I will reply with what I accept.")
-        if command == "free":
+        elif command == "free":
             chk = self.check_giveaway(author)
             if chk == 0:
                 if userexists == 0:
                     self.create_account(author)
                 self.modify_user_balance("+",author,"0.2")
+                self.add_user_to_giveaway(author)
+                message.reply("You've successfully claimed your 0.2 free Garlicoin, please send me a new PM (not a reply) with help or balance to see your new balance.")
+                
             elif chk == 2:
                 message.reply("Sorry, this giveaway expired!")
+        else:
+            message.reply("Sorry! I did not understand the command you gave. Please write a new PM (not reply) with help and I will reply with what I accept.")
 
     def process_multi_command(self,message,command):
         author = message.author

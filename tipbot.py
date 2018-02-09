@@ -13,6 +13,7 @@ import random
 from utils import utils
 import datetime
 import re
+import urllib
 
 class logger():
 
@@ -49,33 +50,75 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         else:
             return 1
 
-    def check_address(self,address):
-        #Here we check the address is correct, some users like to give us LTC addresses occasionally...
-        if re.search('^G[a-zA-Z0-9]{33}$',address):
+    def get_rates(self):
+        
+
+    def check_supported_coin(self,coin):
+        supported = ['garlicoin','dash']
+        if coin in supported:
             return True
         else:
             return False
 
-    def modify_user_balance(self,pn,username,amt):
+    def check_address(self,address):
+        #Here we check the address is correct, some users like to give us LTC addresses occasionally...
+        if re.search('^(G|X)[a-zA-Z0-9]{33}$',address):
+            return True
+        else:
+            return False
+
+    def modify_user_balance(self,pn,username,amt,coin='garlicoin'):
         if amt < 0:
             self.logger.logline("%s tried to use a negative number!" % (username))
             raise Exception
-        if pn == "+":
-            sql = "UPDATE amounts SET amount=amount+%s WHERE username=%s"
-            self.logger.logline("%s's balance has been credited by %s" % (username,amt))
-        elif pn == "-":
-            sql = "UPDATE amounts SET amount=amount-%s WHERE username=%s"
-            self.logger.logline("%s's balance has been deducted by %s" % (username,amt))
+
+        if coin == "garlicoin":
+            if pn == "+":
+                sql = "UPDATE amounts SET amount=amount+%s WHERE username=%s"
+                self.logger.logline("%s's balance has been credited by %s" % (username,amt))
+            elif pn == "-":
+                sql = "UPDATE amounts SET amount=amount-%s WHERE username=%s"
+                self.logger.logline("%s's balance has been deducted by %s" % (username,amt))
+            else:
+                self.logger.logline("modify_user_balance got strange request. Aborting")
+                return 1
+        elif coin == "dash":
+            if pn == "+":
+                sql = "UPDATE amounts SET dashamt=dashamt+%s WHERE username=%s"
+                self.logger.logline("%s's balance has been credited by %s (DASH)" % (username,amt))
+            elif pn == "-":
+                sql = "UPDATE amounts SET dashamt=dashamt-%s WHERE username=%s"
+                self.logger.logline("%s's balance has been deducted by %s (DASH)" % (username,amt))
+            else:
+                self.logger.logline("modify_user_balance got strange request. Aborting")
+                return 1
         else:
             self.logger.logline("modify_user_balance got strange request. Aborting")
             return 1
         self.cursor.execute(sql, (amt,username,))
         return 0
 
-    def new_withdrawal_request(self,username,address,amount):
-        self.modify_user_balance("-",username,amount)
-        sql = "INSERT INTO withdraw (username, address, amount, confirmed) VALUES (%s, %s, %s, 0)"
-        self.cursor.execute(sql, (username,address,amount,))
+    def process_withdraw(self,author,address,amt,amtleft,coin,message):
+        if amt <= amtleft:
+            self.new_withdrawal_request(author,address,amt,coin)
+            message.reply("Hi, your withdrawal request has been accepted! Please note this is a manual process for now. PM my carer /u/ktechmidas if you need it urgently.")
+            self.logger.logline("%s has a new withdrawal waiting. AMT: %s %s" % (author,amt,coin))
+            return 0
+        else:
+            self.logger.logline("%s tried to withdraw more than was in their account, AMT: %s" % (author,amt))
+            message.reply("Oops, you tried to withdraw more than is in your account. Please send a message with the word 'balance' to get your current balance")
+            return 1
+
+
+    def new_withdrawal_request(self,username,address,amount,coin):
+        self.modify_user_balance("-",username,amount,coin)
+        sql = "INSERT INTO withdraw (username, address, amount, confirmed, coin) VALUES (%s, %s, %s, 0, %s)"
+        self.cursor.execute(sql, (username,address,amount,coin,))
+
+    def get_dash_for_user(self,username):
+        sql = "SELECT * FROM amounts WHERE username=%s"
+        self.cursor.execute(sql, (username,))
+        return Decimal(self.cursor.fetchone()[3])
 
     def give_user_the_tip(self,sender,receiver,addamt,bank,mention): #o.o
         if addamt >= bank+Decimal(0.01):
@@ -135,17 +178,17 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                 except:
                     self.logger.logline("Reddit doesn't seem to be responding right now...died on comment & sendmsg for new user.")
 
-    def new_deposit(self,username): #If the user hasn't deposited with us before, he gets a flag created, else just do nothing because the flag is already there.
-        sql = "SELECT * FROM deposits WHERE username=%s"
-        self.cursor.execute(sql, (username,))
+    def new_deposit(self,username,coin='garlicoin'): #If the user hasn't deposited with us before, he gets a flag created, else just do nothing because the flag is already there.
+        sql = "SELECT * FROM deposits WHERE username=%s AND coin=%s"
+        self.cursor.execute(sql, (username,coin,))
         if not self.cursor.rowcount:
-            sql = "INSERT INTO deposits (username, confirmed, amount, txs) VALUES (%s, 0, 0, 0)"
-            self.cursor.execute(sql, (username,))
+            sql = "INSERT INTO deposits (username, confirmed, amount, txs, coin) VALUES (%s, 0, 0, 0, %s)"
+            self.cursor.execute(sql, (username,coin,))
     
     def get_amount_for_user(self,username):
         sql = "SELECT * FROM amounts WHERE username=%s"
         self.cursor.execute(sql, (username,))
-        return Decimal(self.cursor.fetchone()[1])
+        return Decimal(self.cursor.fetchone()[2])
 
     def check_mentions(self):
         unread = []
@@ -169,8 +212,8 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         sql = "INSERT INTO history (sender, recv, amount, mention) VALUES (%s, %s, %s, %s)"
         self.cursor.execute(sql, (sender,receiver,amt,mention,))
 
-    def get_new_address(self,username):
-        return subprocess.check_output(shlex.split('%s/%s-cli getnewaddress %s' % (self.utils.config['other']['full_dir'],self.utils.config['other']['crypto'],username)))
+    def get_new_address(self,username,coin):
+        return subprocess.check_output(shlex.split('%s/%s/bin/%s-cli getnewaddress %s' % (self.utils.config['other']['full_dir'],coin,coin,username)))
 
     def process_mention(self,mention):
         #print('{}\n{}\n'.format(mention.author, mention.body))
@@ -209,14 +252,21 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                 message.reply("Hi. You already have an account so we cannot sign you up again. Please send the word balance in a new message to /u/garlictipsbot to find your balance")
         elif command == "balance":
             balance = self.get_amount_for_user(author)
-            self.logger.logline("%s requested their balance. AMT: %s" % (author,balance))
-            message.reply("Your balance is %s" % balance)
+            dash = self.get_dash_for_user(author) #Will combine get_amount_for_user and get_dash_for_user in a future release
+            self.logger.logline("%s requested their balance. AMT: %s Dash: %s" % (author,balance,dash))
+            if dash == 0:
+                message.reply("Your Garlicoin balance is %s" % balance)
+            else:
+                message.reply("Your Garlicoin balance is %s\n\n Your Dash balance is %s" % (balance,dash))
         elif command == "deposit":
             self.new_deposit(author)
-            addy = self.get_new_address(author)
+            addy = self.get_new_address(author,"garlicoin")
             message.reply("Hi! Our cooks have generated a deposit address just for you, it is: %s \n\n Once you have sent some garlicoin please be patient while it appears in your account.\n\n **NOTE:** You may have to wait 10-15 minutes after depositing due to the way I check deposits, this may be changing soon." % (addy))
         elif command == "help":
             message.reply(self.help)
+        elif command == "rates":
+            amt = self.get_rates()
+            message.reply("The current rates for selling Garlic are:\n1 Dash = %s GRLC\n\nThe current rates for buying Garlic are:\n%s GRLC = 1 Dash" % (amt,amt))
         else:
             message.reply("Sorry! I did not understand the command you gave. Please write a new PM (not reply) with help and I will reply with what I accept.")
 
@@ -229,11 +279,18 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         msgsplit = message.body.split()
         msgsplit[0] = msgsplit[0].lower()
         self.logger.logline("%s issued command %s" % (author,message.body))
+        if msgsplit[0] == "deposit":
+            coin = msgsplit[1].lower()
+            if not self.check_supported_coin(coin):
+                message.reply("You tried to deposit an unsupported coin, right now we only support Garlicoin and Dash")
+                raise Exception
+            self.new_deposit(author,coin)
+            addy = self.get_new_address(author,coin)
+            message.reply("Hi! Our cooks have generated a deposit address just for you, it is: %s \n\n Once you have sent some %s please be patient while it appears in your account.\n\n **NOTE:** You may have to wait 10-15 minutes after depositing due to the way I check deposits, this may be changing soon." % (addy,coin))
+
         if msgsplit[0] == "withdraw":
             try:
                 address = msgsplit[1]
-                #if address.len() != 34:
-                    #raise Exception
                 amt = Decimal(msgsplit[2])
             except:
                 message.reply("You don't seem to have sent me an amount or address, please resend in the format withdraw address amount - PM /u/ktechmidas for help if you need it.")
@@ -242,21 +299,46 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             try:
                 if not self.check_address(address):
                     raise Exception #Objection!
-                amtleft = self.get_amount_for_user(author)
-                ##amtleft = Decimal(self.cursor.fetchone()[1])
-                
-                if amt <= amtleft:
-                    self.new_withdrawal_request(author,address,amt)
-                    message.reply("Hi, your withdrawal request has been accepted! Please note this is a manual process for now. PM my carer /u/ktechmidas if you need it urgently.")
-                    self.logger.logline("%s has a new withdrawal waiting. AMT: %s" % (author,amt))
-                    return 0
-                else:
-                    self.logger.logline("%s tried to withdraw more than was in their account, AMT: %s" % (author,amt))
-                    message.reply("Oops, you tried to withdraw more than is in your account. Please send a message with the word 'balance' to get your current balance")
-                    return 1
+
+                if address.startswith("G"): #Our favourite coin, right?
+                    amtleft = self.get_amount_for_user(author)
+                    self.process_withdraw(author,address,amt,amtleft,"garlicoin",message)
+                elif address.startswith("X"): #Get dashing
+                    amtleft = self.get_dash_for_user(author)
+                    self.process_withdraw(author,address,amt,amtleft,"dash",message)
+
             except:
                 message.reply("It appears you tried to send a withdrawal request, but we couldn't figure out the format. Please resend it as 'withdraw address amount' - It's also possible you gave an invalid Garlicoin address, please check it.")
                 traceback.print_exc()
+        elif msgsplit[0] == "exchange":
+            crypto_from = msgsplit[2].upper()
+            crypto_to = msgsplit[4].upper()
+            amount = msgsplit[1]
+            pair = "%s/%s" % (crypto_from,crypto_to)
+            sql = "SELECT * FROM rates WHERE pair=%s" % (pair)
+            self.cursor.execute(sql)
+            result = self.cursor.fetchone()
+            if not result:
+                message.reply("The currency you want to exchange from or to is unavailable at this time. This could be due to suspension of trading or non-supported currency pairs.")
+                raise Exception
+            rate = result[2] #10 GRLC to Dash is 0.0045
+            amttoconvertto = amount * rate
+
+            if crypto_from == "GRLC":
+                balance = self.get_amount_for_user(author)
+                if balance+0.1 > amount:
+                    self.modify_user_balance('-',author,amount)
+                    self.modify_user_balance('+',author,amttoconvertto,crypto_to)
+                    message.reply("Hi, your %s GRLC has successfully been converted to %s Dash at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas")
+            elif crypto_from == "DASH":
+                balance = self.get_dash_for_user(author)
+                if balance+0.00001 > amount
+                    self.modify_user_balance('-',author,amount,'DASH')
+                    self.modify_user_balance('+',author,amttoconvertto)
+                    message.reply("Hi, your %s Dash has successfully been converted to %s GRLC at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas")
+
+
+
         elif msgsplit[0] == "tip":
             #The user wants to tip another privately, that's cool, we can do that too.
             try:

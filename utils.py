@@ -23,11 +23,11 @@ class utils():
         return cursor
     
     def connect_to_reddit(self):
-        self.reddit = praw.Reddit(client_id='xxxx',
-                        client_secret='xxxx',
-                        password='xxxx',
-                        user_agent='xxxx',
-                        username='xxxx')
+        self.reddit = praw.Reddit(client_id=self.config['reddit']['client_id'],
+                        client_secret=self.config['reddit']['client_secret'],
+                        password=self.config['reddit']['password'],
+                        user_agent=self.config['reddit']['user_agent'],
+                        username=self.config['reddit']['username'])
         return self.reddit
 
     def send_message(self,recv,subject,message):

@@ -68,6 +68,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             return False
 
     def modify_user_balance(self,pn,username,amt,coin='garlicoin'):
+        coin = coin.lower() #Sometimes we're dealing with upper and lower case
         if amt < 0:
             self.logger.logline("%s tried to use a negative number!" % (username))
             raise Exception

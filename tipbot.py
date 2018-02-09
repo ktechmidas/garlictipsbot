@@ -228,7 +228,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         del unread[:] #Probably not needed after the recode, since it's a local var, but still good to clean up I suppose....
     
     def create_account(self,username):
-        sql = "INSERT INTO amounts VALUES (%s, 0)"
+        sql = "INSERT INTO amounts (username,amount) VALUES (%s, 0)"
         self.cursor.execute(sql, (username,))
 
     def add_history_entry(self,sender,receiver,amt,mention):

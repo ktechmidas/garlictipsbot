@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.7.20, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.21, for Linux (x86_64)
 --
--- Host: localhost    Database: tipbot
+-- Host: garlic.c2yffroyteqz.ap-northeast-2.rds.amazonaws.com    Database: tipbot
 -- ------------------------------------------------------
--- Server version	5.7.20-0ubuntu0.16.04.1
+-- Server version	5.5.5-10.1.26-MariaDB
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -23,8 +23,26 @@ DROP TABLE IF EXISTS `amounts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `amounts` (
+  `aid` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(45) DEFAULT NULL,
-  `amount` decimal(8,6) DEFAULT NULL
+  `amount` decimal(10,6) DEFAULT NULL,
+  `dashamt` decimal(10,6) DEFAULT '0.000000',
+  PRIMARY KEY (`aid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1709 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `dash_deposits`
+--
+
+DROP TABLE IF EXISTS `dash_deposits`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `dash_deposits` (
+  `did` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(40) DEFAULT NULL,
+  `confirmed` binary(1) DEFAULT NULL,
+  PRIMARY KEY (`did`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -38,12 +56,25 @@ DROP TABLE IF EXISTS `deposits`;
 CREATE TABLE `deposits` (
   `depid` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(40) DEFAULT NULL,
-  `address` varchar(40) DEFAULT NULL,
-  `confirmed` int(11) DEFAULT NULL,
   `amount` decimal(8,6) DEFAULT NULL,
   `txs` int(11) DEFAULT NULL,
+  `coin` varchar(20) DEFAULT 'garlicoin',
   PRIMARY KEY (`depid`)
-) ENGINE=InnoDB AUTO_INCREMENT=177 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=250 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `giveaway`
+--
+
+DROP TABLE IF EXISTS `giveaway`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `giveaway` (
+  `gid` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(40) DEFAULT NULL,
+  PRIMARY KEY (`gid`)
+) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -60,7 +91,22 @@ CREATE TABLE `history` (
   `amount` float(8,6) DEFAULT NULL,
   `mention` varchar(40) DEFAULT NULL,
   PRIMARY KEY (`hid`)
-) ENGINE=InnoDB AUTO_INCREMENT=353 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=932 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `rates`
+--
+
+DROP TABLE IF EXISTS `rates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `rates` (
+  `rid` int(11) NOT NULL AUTO_INCREMENT,
+  `pair` varchar(10) DEFAULT NULL,
+  `rate` decimal(12,8) DEFAULT NULL,
+  PRIMARY KEY (`rid`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -95,8 +141,9 @@ CREATE TABLE `withdraw` (
   `address` varchar(40) DEFAULT NULL,
   `amount` varchar(10) DEFAULT NULL,
   `confirmed` int(11) DEFAULT NULL,
+  `coin` varchar(20) DEFAULT 'garlicoin',
   PRIMARY KEY (`wid`)
-) ENGINE=InnoDB AUTO_INCREMENT=165 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=430 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -108,4 +155,4 @@ CREATE TABLE `withdraw` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-01-30 21:07:35
+-- Dump completed on 2018-02-09 18:41:22

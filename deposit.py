@@ -24,9 +24,9 @@ class deposit():
     def checks(self):
         me = reddit.user.me()
 
-    def all_deposits(self):
-        sql = "SELECT * FROM deposits WHERE coin=%s"
-        self.cursor.execute(sql, (coin,))
+    def all_deposits(self,coin):
+        sql = "SELECT * FROM deposits WHERE coin='%s'" % coin
+        self.cursor.execute(sql)
         return self.cursor.fetchall()
 
     def get_amount_from_json(self,raw_tx,tx_in_db):
@@ -35,7 +35,7 @@ class deposit():
 
 
     def check_deposits(self,username,tx_in_db,coin):
-        qcheck = subprocess.check_output(shlex.split('%s/%s/bin/%s listtransactions %s' % (self.utils.config['other']['full_dir'],t,t,username)))
+        qcheck = subprocess.check_output(shlex.split('%s/%s/bin/%s-cli listtransactions %s' % (self.utils.config['other']['full_dir'],coin,coin,username)))
         txamount = qcheck.count("amount") #TODO: This can be done a lot better.
         
         if txamount > tx_in_db:
@@ -70,12 +70,13 @@ class deposit():
             print("Something went wrong. Please check Reddit for details")
             sys.exit()
  
-        for coin in self.utils.config['other']['cryptos']
+	cnt = 1
+        for coin in self.utils.config['other']['cryptos'].values():
+	    coin = str(coin)
             result = self.all_deposits(coin)
-
             for row in result:
                 username = row[1]
-                tx_in_db = row[5]
+                tx_in_db = row[3]
                 amt = self.check_deposits(username,tx_in_db,coin)
 
                 if amt != 0:

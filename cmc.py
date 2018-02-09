@@ -1,6 +1,7 @@
 import urllib
 import json
 from utils import utils
+from decimal import *
 
 grlcpriceurl = 'https://api.coinmarketcap.com/v1/ticker/garlicoin/'
 dashpriceurl = 'https://api.coinmarketcap.com/v1/ticker/dash/'
@@ -8,13 +9,16 @@ dashpriceurl = 'https://api.coinmarketcap.com/v1/ticker/dash/'
 utils = utils()
 cursor = utils.get_mysql_cursor()
 
+sql = "TRUNCATE TABLE rates"
+cursor.execute(sql)
+
 response = urllib.urlopen(grlcpriceurl)
 data = json.loads(response.read())
-grlcprice = data[0]['price_usd']
+grlcprice = round(Decimal(data[0]['price_usd']),8)
 
 response = urllib.urlopen(dashpriceurl)
 data = json.loads(response.read())
-dashprice = data[0]['price_usd']
+dashprice = round(Decimal(data[0]['price_usd']),8)
 
 sql = "INSERT INTO rates (pair,rate) VALUES (%s, %s)"
 pair = "GRLC/DASH"

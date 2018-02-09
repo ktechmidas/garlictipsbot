@@ -53,6 +53,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             else:
                 return 1
         else:
+	    self.logger.logline("Giveaway Limit Reached")
             return 2
 
     def add_user_to_giveaway(self,username):
@@ -264,7 +265,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         author = message.author
         self.logger.logline("%s issued command %s" % (author,command))
         userexists = self.does_user_exist(author)
-        if command != "signup" and userexists == 0:
+        if command not in ['signup', 'free'] and not userexists:
             message.reply("Hi! This bot doesn't know who you are. Please PM the word 'signup' in a new message if you would like to start using the bot. If you think you should have a balance here please PM my carer /u/ktechmidas")
             return 2
         if command == "signup":

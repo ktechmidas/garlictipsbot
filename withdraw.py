@@ -25,7 +25,7 @@ class withdraw():
         if amount.startswith("."):
             amount = "0"+amount
             #pdb.set_trace()
-        txid = subprocess.check_output(shlex.split('/home/monotoko/garlic/garlicoin/bin/garlicoin-cli sendtoaddress %s %s' % (address, amount)))
+        txid = subprocess.check_output(shlex.split('/home/ubuntu/garlicoin/bin/garlicoin-cli sendtoaddress %s %s' % (address, amount)))
         self.set_confirmed(username)
         print "Sent %s GLC to %s" % (amount, address)
         return txid

@@ -41,6 +41,20 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply.\n\n
 
 If you need any further assistance please PM my creator, /u/ktechmidas"""
 
+    def check_giveaway(self,username):
+        sql = "SELECT * FROM giveaway"
+        self.cursor.execute(sql)
+        if self.cursor.rowcount < 150:
+            sql = "SELECT * FROM giveaway WHERE username=%s"
+            self.cursor.execute(sql, (username,))
+            result = self.cursor.fetchone()
+            if not result:
+                return 0
+            else:
+                return 1
+        else:
+            return 2
+
     def get_rates(self):
         sql = "SELECT * FROM rates WHERE pair='%s'" % ("DASH/GRLC")
         self.cursor.execute(sql)
@@ -274,6 +288,14 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             message.reply("The current rate is \n[Dash/GRLC <>  %s]" % (round(amt,2)))
         else:
             message.reply("Sorry! I did not understand the command you gave. Please write a new PM (not reply) with help and I will reply with what I accept.")
+        if command == "free":
+            chk = self.check_giveaway(author)
+            if chk == 0:
+                if userexists == 0:
+                    self.create_account(author)
+                self.modify_user_balance("+",author,"0.2")
+            elif chk == 2:
+                message.reply("Sorry, this giveaway expired!")
 
     def process_multi_command(self,message,command):
         author = message.author

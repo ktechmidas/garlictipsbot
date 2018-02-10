@@ -1,0 +1,22 @@
+{
+    "mysql":{
+        "host":"xxxx",
+        "user":"xxxx",
+        "passwd":"xxxx",
+        "db":"xxxx"
+    },
+    "reddit":{
+        "client_id":"xxxx",
+        "client_secret":"xxxx",
+        "password":"xxxx",
+        "user_agent":"xxxx",
+        "username":"xxxx"
+    },
+    "other":{
+        "full_dir":"/home/ubuntu/",
+        "cryptos": { 
+            "1":"garlicoin",
+            "2":"dash"
+        }
+    }
+}

@@ -1,3 +1,7 @@
+# Warning
+
+This is a test branch, anything here may be unstable, filled with bugs and steal your crypto. Don't use unless you need cutting edge features.
+
 # garlictipsbot
 Garlicoin tipbot built in Python. Probably ready for production use, but I'd give it a few days. Recoded from the ground up, this is version 2. Version 1 will never be spoken of again.
 

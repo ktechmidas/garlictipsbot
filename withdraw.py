@@ -25,8 +25,7 @@ class withdraw():
         if amount.startswith("."):
             amount = "0"+amount
             #pdb.set_trace()
-        txid = subprocess.check_output(shlex.split('/home/ubuntu/garlicoin/bin/garlicoin-cli sendtoaddress %s %s' % (address, amount)))
-        qcheck = subprocess.check_output(shlex.split('%s/%s/bin/%s-cli sendtoaddress %s %s' % (self.utils.config['other']['full_dir'],coin,coin,address,amount)))
+        txid = subprocess.check_output(shlex.split('%s/%s/bin/%s-cli sendtoaddress %s %s' % (self.utils.config['other']['full_dir'],coin,coin,address,amount)))
         self.set_confirmed(username,coin)
         print "Sent %s %s to %s" % (amount,coin,address)
         return txid

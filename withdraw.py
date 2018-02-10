@@ -16,29 +16,31 @@ class withdraw():
         self.cursor = self.utils.get_mysql_cursor()
 
 
-    def set_confirmed(self,username):
+    def set_confirmed(self,username,coin):
          #pdb.set_trace()
-         sql = "UPDATE withdraw SET confirmed=1 WHERE username=%s"
-         self.cursor.execute(sql, (username,))
+         sql = "UPDATE withdraw SET confirmed=1 WHERE username=%s AND coin=%s" #Just a quick thought, what if someone has two withdrawals? I think this may have already happened...
+         self.cursor.execute(sql, (username,coin,))
 
-    def process_withdrawal(self,address,amount,username):
+    def process_withdrawal(self,address,amount,username,coin):
         if amount.startswith("."):
             amount = "0"+amount
             #pdb.set_trace()
         txid = subprocess.check_output(shlex.split('/home/ubuntu/garlicoin/bin/garlicoin-cli sendtoaddress %s %s' % (address, amount)))
-        self.set_confirmed(username)
-        print "Sent %s GLC to %s" % (amount, address)
+        qcheck = subprocess.check_output(shlex.split('%s/%s/bin/%s-cli sendtoaddress %s %s' % (self.utils.config['other']['full_dir'],coin,coin,address,amount)))
+        self.set_confirmed(username,coin)
+        print "Sent %s %s to %s" % (amount,coin,address)
         return txid
 
     def main(self):
-        sql = "SELECT * FROM withdraw WHERE confirmed=0"
-        self.cursor.execute(sql)
-        result = self.cursor.fetchall()
-        #self.utilsobj.send_messages("ktechmidas","Yo","Test")
-        for row in result:
-            txid = self.process_withdrawal(row[2], row[3], row[1])
-            self.utils.send_message(row[1],"Withdrawal Processed","Hi, this is an automated message to let you know your withdrawal has been processed. The GRLC was sent to %s. \n\nThe TXID is: %s" % (row[2],txid))
-        time.sleep(2)
+        for coin in self.utils.config['other']['cryptos'].values():
+            sql = "SELECT * FROM withdraw WHERE confirmed=0 AND coin=%s"
+            self.cursor.execute(sql, (coin,))
+            result = self.cursor.fetchall()
+            #self.utilsobj.send_messages("ktechmidas","Yo","Test")
+            for row in result:
+                txid = self.process_withdrawal(row[2], row[3], row[1],coin)
+                self.utils.send_message(row[1],"Withdrawal Processed","Hi, this is an automated message to let you know your withdrawal has been processed. The %s was sent to %s. \n\nThe TXID is: %s" % (coin,row[2],txid))
+            time.sleep(2)
 
 withobj = withdraw()
 withobj.main()

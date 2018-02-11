@@ -17,6 +17,7 @@
         "cryptos": { 
             "1":"garlicoin",
             "2":"dash"
-        }
+        },
+        "testmode":0
     }
 }

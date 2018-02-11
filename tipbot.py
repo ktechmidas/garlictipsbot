@@ -42,8 +42,9 @@ To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply.\n\n
 If you need any further assistance please PM my creator, /u/ktechmidas"""
 
     def reply_to_message(self,message,content):
+        pdb.set_trace()
         if self.utils.config['other']['testmode']:
-            self.logger.logline("TESTMODE: %s" % content)
+            self.logger.logline("TESTMODE MESSAGE: %s" % content)
             return 0
         else:
             message.reply(content)
@@ -51,7 +52,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
 
     def reply_to_comment(self,mention,comment):
         if self.utils.config['other']['testmode']:
-            self.logger.logline("TESTMODE: %s" % content)
+            self.logger.logline("TESTMODE COMMENT: %s" % comment)
             return 0
         else:
             self.reddit.comment(id=mention.id).reply(comment)

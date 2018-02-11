@@ -429,6 +429,6 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         self.check_messages()
         print("Done, next round in 15")
 
-
-tipobj = tipbot()
-tipobj.main()
+if __name__ == "__main__":
+    tipobj = tipbot()
+    tipobj.main()

@@ -5,6 +5,7 @@ import subprocess
 import shlex
 import time
 from utils import utils
+from tipbot import logger
 #Simple withdrawal class, processes withdrawals from the database
 
 class withdraw():
@@ -14,6 +15,7 @@ class withdraw():
         self.utils = utils()
         self.reddit = self.utils.connect_to_reddit()
         self.cursor = self.utils.get_mysql_cursor()
+        self.logger = logger()
 
 
     def set_confirmed(self,username,coin):
@@ -39,6 +41,7 @@ class withdraw():
             for row in result:
                 txid = self.process_withdrawal(row[2], row[3], row[1],coin)
                 self.utils.send_message(row[1],"Withdrawal Processed","Hi, this is an automated message to let you know your withdrawal has been processed. The %s was sent to %s. \n\nThe TXID is: %s" % (coin,row[2],txid))
+                self.logger.logline("%s %s withdrawal by %s confirmed, TXID %s" % (row[3],coin,row[1],txid))
             time.sleep(2)
 
 withobj = withdraw()

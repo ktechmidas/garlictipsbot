@@ -31,10 +31,11 @@ class utils():
         return self.reddit
 
     def send_message(self,recv,subject,message):
-        try:
-            redmsg = self.reddit.redditor(recv)
-            redmsg.message(subject, message)
-            return 0
-        except:
-            return 1
+        if not self.config['other']['testmode']:
+            try:
+                redmsg = self.reddit.redditor(recv)
+                redmsg.message(subject, message)
+                return 0
+            except:
+                return 1
 

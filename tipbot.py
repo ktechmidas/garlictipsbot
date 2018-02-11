@@ -57,6 +57,16 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         else:
             self.reddit.comment(id=mention.id).reply(comment)
 
+    def blacklist_user(self,username):
+        sql = "INSERT INTO blacklist (username) VALUES (%s)"
+        self.cursor.execute(sql, (username,))
+        self.utils.send_message(username,"Blacklisted","Dear %s, you have been blacklisted from using garlictipsbot due to suspicious behaviour. This means the bot will ignore any tips you give, and will not accept any deposits from you. If you believe this was in error please PM /u/ktechmidas\n\n**NOTE:** If you have a balance with the bot, you can still withdraw it the normal way." % username)
+
+    def check_blacklist(self,username):
+        sql = "SELECT * FROM blacklist WHERE username=%s"
+        self.cursor.execute(sql, (username,))
+        self.cursor.fetchall()
+        return self.cursor.rowcount
 
     def check_giveaway(self,username):
         sql = "SELECT * FROM giveaway"
@@ -77,12 +87,17 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         sql = "INSERT INTO giveaway (username) VALUES (%s)"
         self.cursor.execute(sql, (username,))
 
-    def get_rates(self):
+    def get_rates_dash(self):
         sql = "SELECT * FROM rates WHERE pair='%s'" % ("DASH/GRLC")
         self.cursor.execute(sql)
         result = self.cursor.fetchone()
         return result[2]
-        
+
+    def get_rates_ltc(self):
+        sql = "SELECT * FROM rates WHERE pair='%s'" % ("LTC/GRLC")
+        self.cursor.execute(sql)
+        result = self.cursor.fetchone()
+        return result[2]
 
     def does_user_exist(self,username):
         sql = "SELECT * FROM amounts WHERE username=%s"
@@ -94,7 +109,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             return 1
 
     def check_supported_coin(self,coin):
-        supported = ['garlicoin','dash']
+        supported = ['garlicoin','dash','litecoin']
         if coin in supported:
             return True
         else:
@@ -102,7 +117,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
 
     def check_address(self,address):
         #Here we check the address is correct, some users like to give us LTC addresses occasionally...
-        if re.search('^(G|X)[a-zA-Z0-9]{33}$',address):
+        if re.search('^(G|X|L)[a-zA-Z0-9]{33}$',address):
             return True
         else:
             return False
@@ -121,6 +136,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                 sql = "UPDATE amounts SET amount=amount-%s WHERE username=%s"
                 self.logger.logline("%s's balance has been deducted by %s" % (username,amt))
             else:
+                self.blacklist_user(username)
                 self.logger.logline("modify_user_balance got strange request. Aborting")
                 return 1
         elif coin == "dash":
@@ -131,6 +147,18 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                 sql = "UPDATE amounts SET dashamt=dashamt-%s WHERE username=%s"
                 self.logger.logline("%s's balance has been deducted by %s (DASH)" % (username,amt))
             else:
+                self.blacklist_user(username)
+                self.logger.logline("modify_user_balance got strange request. Aborting")
+                return 1
+        elif coin == "litecoin":
+            if pn == "+":
+                sql = "UPDATE amounts SET ltcamt=ltcamt+%s WHERE username=%s"
+                self.logger.logline("%s's balance has been credited by %s (LTC)" % (username,amt))
+            elif pn == "-":
+                sql = "UPDATE amounts SET ltcamt=ltcamt-%s WHERE username=%s"
+                self.logger.logline("%s's balance has been deducted by %s (LTC)" % (username,amt))
+            else:
+                self.blacklist_user(username)
                 self.logger.logline("modify_user_balance got strange request. Aborting")
                 return 1
         else:
@@ -139,21 +167,39 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         self.cursor.execute(sql, (amt,username,))
         return 0
 
-    def process_withdraw(self,author,address,amt,amtleft,coin,message):
+    def process_withdraw(self,author,address,amt,amtleft,coin,message,bl):
+        if amt == 0:
+            self.blacklist_user(author)
+            return 2
         if amt <= amtleft:
-            self.new_withdrawal_request(author,address,amt,coin)
+            self.new_withdrawal_request(author,address,amt,coin,bl)
             self.reply_to_message(message,"Hi, your withdrawal request has been accepted! Please note this is a manual process for now. PM my carer /u/ktechmidas if you need it urgently.")
             self.logger.logline("%s has a new withdrawal waiting. AMT: %s %s" % (author,amt,coin))
             return 0
         else:
-            self.logger.logline("%s tried to withdraw more than was in their account, AMT: %s" % (author,amt))
+            if coin == "garlicoin":
+                if amt-amtleft > 50:
+                    self.blacklist_user(author)
+                    self.logger.logline("%s blacklisted for trying to withdraw much more than in their account" % author)
+                    return 2
+            elif coin == "dash":
+                if amt-amtleft > 0.01:
+                    self.blacklist_user(author)
+                    self.logger.logline("%s blacklisted for trying to withdraw much more than in their account" % author)
+                    return 2
+            elif coin == "litecoin":
+                if amt-amtleft > 1:
+                    self.blacklist_user(author)
+                    self.logger.logline("%s blacklisted for trying to withdraw much more than in their account" % author)
+                    return 2
+            self.logger.logline("%s tried to withdraw more than was in their account, AMT: %s %s" % (author,amt,coin))
             self.reply_to_message(message,"Oops, you tried to withdraw more than is in your account. Please send a message with the word 'balance' to get your current balance")
             return 1
 
 
-    def new_withdrawal_request(self,username,address,amount,coin):
+    def new_withdrawal_request(self,username,address,amount,coin,bl):
         self.modify_user_balance("-",username,amount,coin)
-        sql = "INSERT INTO withdraw (username, address, amount, confirmed, coin) VALUES (%s, %s, %s, 0, %s)"
+        sql = "INSERT INTO withdraw (username, address, amount, confirmed, coin) VALUES (%s, %s, %s, bl, %s)"
         self.cursor.execute(sql, (username,address,amount,coin,))
 
     def get_dash_for_user(self,username):
@@ -161,9 +207,18 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         self.cursor.execute(sql, (username,))
         return Decimal(self.cursor.fetchone()[3])
 
+    def get_ltc_for_user(self,username):
+        sql = "SELECT * FROM amounts WHERE username=%s"
+        self.cursor.execute(sql, (username,))
+        return Decimal(self.cursor.fetchone()[4])
+
     def give_user_the_tip(self,sender,receiver,addamt,bank,mention): #o.o
         if addamt >= bank+Decimal(0.01):
             try:
+                if addamt-bank > 50:
+                    self.blacklist_user(sender)
+                    self.logger.logline("%s was blacklisted for trying to send far too much" % sender)
+                    return 2
                 self.logger.logline("%s had %s and tried to give %s. Failed due to not having enough in bank." % (sender,bank,addamt))
                 self.reply_to_comment(mention,"Sorry! You don't have enough in your account and we aren't a garlic bank! PM me with the word 'deposit' and I will send you instructions to get more delicious garlic into your account.")
                 return 2
@@ -254,16 +309,27 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         self.cursor.execute(sql, (sender,receiver,amt,mention,))
 
     def get_new_address(self,username,coin):
-        return subprocess.check_output(shlex.split('%s/%s/bin/%s-cli getnewaddress %s' % (self.utils.config['other']['full_dir'],coin,coin,username)))
-
+        if self.utils.config['other']['testmode']:
+            return "0xTESTADDRESSDONOTUSEx0"
+        else:
+            return subprocess.check_output(shlex.split('%s/%s/bin/%s-cli getnewaddress %s' % (self.utils.config['other']['full_dir'],coin,coin,username)))
     def process_mention(self,mention):
         #print('{}\n{}\n'.format(mention.author, mention.body))
         self.logger.logline('{}\n{}\n'.format(mention.author, mention.body))
         todo = mention.body.split()
-        needle = todo.index("/u/garlictipsbot") #Need to find this in multiple ways, currently tripping on u/ and capital letters.
+        pdb.set_trace()
+        try:
+            needle = todo.index("/u/garlictipsbot") #Need to find this in multiple ways, currently tripping on u/ and capital letters.
+        except:
+            needle = todo.index("u/garlictipsbot")
+
         sender = mention.author
         addamt = todo[needle+1]
         receiver = todo[needle+2]
+
+        bl = self.check_blacklist(sender)
+        if bl:
+            return 2
 
         #Ensure we don't have /u/ on receiver
         if receiver.count("/u/") == 1:
@@ -282,8 +348,12 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         author = message.author
         self.logger.logline("%s issued command %s" % (author,command))
         userexists = self.does_user_exist(author)
+        blacklisted = self.check_blacklist(author)
         if command not in ['signup', 'free'] and not userexists:
             self.reply_to_message(message,"Hi! This bot doesn't know who you are. Please PM the word 'signup' in a new message if you would like to start using the bot. If you think you should have a balance here please PM my carer /u/ktechmidas")
+            return 2
+        if command not in ['balance'] and blacklisted:
+            self.reply_to_message(message,"You are currently on the bot's blacklist so we cannot process that command for you.")
             return 2
         if command == "signup":
             if userexists == 0:
@@ -294,11 +364,9 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         elif command == "balance":
             balance = self.get_amount_for_user(author)
             dash = self.get_dash_for_user(author) #Will combine get_amount_for_user and get_dash_for_user in a future release
-            self.logger.logline("%s requested their balance. AMT: %s Dash: %s" % (author,balance,dash))
-            if dash == 0:
-                self.reply_to_message(message,"Your Garlicoin balance is %s" % balance)
-            else:
-                self.reply_to_message(message,"Your Garlicoin balance is %s\n\n Your Dash balance is %s" % (balance,dash))
+            ltc = self.get_ltc_for_user(author)
+            self.logger.logline("%s requested their balance. AMT: %s Dash: %s LTC: %s" % (author,balance,dash,ltc))
+            self.reply_to_message(message,"Your Garlicoin balance is %s\n\n Your Dash balance is %s \n\n Your LTC balance is %s" % (balance,dash,ltc))
         elif command == "deposit":
             self.new_deposit(author)
             addy = self.get_new_address(author,"garlicoin")
@@ -306,8 +374,9 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         elif command == "help":
             self.reply_to_message(message,self.help)
         elif command == "rates":
-            amt = self.get_rates()
-            self.reply_to_message(message,"The current rate is \n[Dash/GRLC <>  %s]" % (round(amt,2)))
+            dashamt = self.get_rates_dash()
+            ltcamt = self.get_rates_ltc()
+            self.reply_to_message(message,"The current rate is \n[Dash/GRLC <>  %s] [LTC/GRLC <>  %s]" % (round(dashamt,2),round(ltcamt,2)))
         elif command == "free":
             chk = self.check_giveaway(author)
             if chk == 0:
@@ -324,17 +393,21 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
 
     def process_multi_command(self,message,command):
         author = message.author
+        blacklisted = self.check_blacklist(author)
         userexists = self.does_user_exist(author)
+        msgsplit = message.body.split()
+        msgsplit[0] = msgsplit[0].lower()
+        if blacklisted and msgsplit[0] not in ['withdraw']:
+            self.logger.logline("%s tried to issue command %s while blacklisted" % (author,command))
+            self.reply_to_message(message,"You are currently on the bot's blacklist so we cannot process that command for you.")
         if userexists == 0:
             self.logger.logline("%s tried to issue command %s while not signed up" % (author,command))
             self.reply_to_message(message,"Hi! This bot doesn't know who you are. Please PM the word 'signup' in a new message if you would like to start using the bot. If you think you should have a balance here please PM my carer /u/ktechmidas")
-        msgsplit = message.body.split()
-        msgsplit[0] = msgsplit[0].lower()
         self.logger.logline("%s issued command %s" % (author,message.body))
         if msgsplit[0] == "deposit":
             coin = msgsplit[1].lower()
             if not self.check_supported_coin(coin):
-                self.reply_to_message(message,"You tried to deposit an unsupported coin, right now we only support Garlicoin and Dash")
+                self.reply_to_message(message,"You tried to deposit an unsupported coin, right now we only support Garlicoin, Dash and LTC")
                 raise Exception
             self.new_deposit(author,coin)
             addy = self.get_new_address(author,coin)
@@ -349,15 +422,21 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                 self.logger.logline("%s sent invalid amount" % (author))
                 return 1
             try:
+                if blacklisted:
+                    bl = 3
+                else:
+                    bl = 0
                 if not self.check_address(address):
                     raise Exception #Objection!
-
                 if address.startswith("G"): #Our favourite coin, right?
                     amtleft = self.get_amount_for_user(author)
-                    self.process_withdraw(author,address,amt,amtleft,"garlicoin",message)
+                    self.process_withdraw(author,address,amt,amtleft,"garlicoin",message,bl)
                 elif address.startswith("X"): #Get dashing
                     amtleft = self.get_dash_for_user(author)
-                    self.process_withdraw(author,address,amt,amtleft,"dash",message)
+                    self.process_withdraw(author,address,amt,amtleft,"dash",message,bl)
+                elif address.startswith("L"):
+                    amtleft = self.get_ltc_for_user(author)
+                    self.process_withdraw(author,address,amt,amtleft,"litecoin",message,bl)
 
             except:
                 self.reply_to_message(message,"It appears you tried to send a withdrawal request, but we couldn't figure out the format. Please resend it as 'withdraw address amount' - It's also possible you gave an invalid Garlicoin address, please check it.")
@@ -388,6 +467,13 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                     self.modify_user_balance('-',author,amount,'DASH')
                     self.modify_user_balance('+',author,amttoconvertto)
                     self.reply_to_message(message,"Hi, your %s Dash has successfully been converted to %s GRLC at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas" % (amount,amttoconvertto,rate))
+            elif crypto_from == "LTC":
+                balance = self.get_ltc_for_user(author)
+                if balance+Decimal(0.01) > amount:
+                    self.modify_user_balance('-',author,amount,'litecoin')
+                    self.modify_user_balance('+',author,amttoconvertto)
+                    self.reply_to_message(message,"Hi, your %s LTC has successfully been converted to %s GRLC at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas" % (amount,amttoconvertto,rate))
+
 
 
 

@@ -55,6 +55,9 @@ class deposit():
             elif coin == "dash":
                 sql = "UPDATE amounts SET dashamt=dashamt+%s WHERE username=%s"
                 self.cursor.execute(sql, (newtx,username,))
+            elif coin == "litecoin":
+                sql = "UPDATE amounts SET ltcamt=ltcamt+%s WHERE username=%s"
+                self.cursor.execute(sql, (newtx,username,))
             return newtx
         else:
             return 0

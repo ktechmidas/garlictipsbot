@@ -9,7 +9,7 @@ import subprocess
 import shlex
 import argparse
 from utils import utils
-#from tipbot import logger
+from tipbot import logger
 
 class deposit():
         
@@ -17,7 +17,7 @@ class deposit():
         #Set up MySQL cursor
         self.debug = 1
         self.utils = utils()
-        #self.logger = logger()
+        self.logger = logger()
         self.reddit = self.utils.connect_to_reddit()
         self.cursor = self.utils.get_mysql_cursor()
 
@@ -41,6 +41,7 @@ class deposit():
         if txamount > tx_in_db:
             #We have a TX that has not been credited yet
             newtx = self.get_amount_from_json(qcheck,tx_in_db)
+            self.logger.logline("Deposit: More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s - COIN: %s" % (tx_in_db, txamount, username, newtx, coin))
             if self.debug:
                 print "More TXs than in DB. We have %s in DB and %s on the blockchain for %s - AMT: %s - COIN: %s" % (tx_in_db, txamount, username, newtx, coin)
             

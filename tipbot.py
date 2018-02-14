@@ -514,20 +514,20 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
             if indmessage.author == 'garlictipsbot':
                 unread.append(indmessage)
                 print "Dont reply to self, silly bot"
-                break
-            try:
-                command = indmessage.body
-                if not ' ' in command:
-                    #If there's only one word it's an information command, eg deposit/balance/help
-                    self.process_command(indmessage,command)
-                else:
-                    self.process_multi_command(indmessage,command)
-            except Exception as ex:
-                print("Something went wrong processing commands...skipping this one")
-                #print(ex)
-                traceback.print_exc()
-        if not self.utils.config['other']['testmode']:
-            self.reddit.inbox.mark_read(unread)
+            else:
+                try:
+                    command = indmessage.body
+                    if not ' ' in command:
+                        #If there's only one word it's an information command, eg deposit/balance/help
+                        self.process_command(indmessage,command)
+                    else:
+                        self.process_multi_command(indmessage,command)
+                except Exception as ex:
+                    print("Something went wrong processing commands...skipping this one")
+                    #print(ex)
+                    traceback.print_exc()
+            if not self.utils.config['other']['testmode']:
+                self.reddit.inbox.mark_read(unread)
 
 
 

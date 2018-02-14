@@ -524,6 +524,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                             if r.author != "garlictipsbot":
                                 sql = "SELECT COUNT(*) FROM processed WHERE pmid=%s"
                                 self.cursor.execute(sql,(r.id,))
+                                result = self.cursor.fetchone()
                                 if result[0] == 0:
                                     sql = "INSERT INTO processed VALUES (%s)"
                                     self.cursor.execute(sql,(r.id,))

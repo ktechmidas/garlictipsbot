@@ -510,7 +510,11 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         #Alright, here's where things get a little fun/messy. 
         unread = []
         for indmessage in self.reddit.inbox.messages(limit=10):
-            unread.append(indmessage)
+            pdb.set_trace()
+            if indmessage.author == 'garlictipsbot':
+                unread.append(indmessage)
+                print "Dont reply to self, silly bot"
+                break
             try:
                 command = indmessage.body
                 if not ' ' in command:

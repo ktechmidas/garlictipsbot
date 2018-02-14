@@ -5,7 +5,7 @@ from decimal import *
 
 grlcpriceurl = 'https://api.coinmarketcap.com/v1/ticker/garlicoin/'
 dashpriceurl = 'https://api.coinmarketcap.com/v1/ticker/dash/'
-
+ltcpriceurl = 'https://api.coinmarketcap.com/v1/ticker/litecoin/'
 utils = utils()
 cursor = utils.get_mysql_cursor()
 
@@ -20,7 +20,12 @@ response = urllib.urlopen(dashpriceurl)
 data = json.loads(response.read())
 dashprice = round(Decimal(data[0]['price_usd']),8)
 
+response = urllib.urlopen(ltcpriceurl)
+data = json.loads(response.read())
+ltcprice = round(Decimal(data[0]['price_usd']),8)
+
 sql = "INSERT INTO rates (pair,rate) VALUES (%s, %s)"
+
 pair = "GRLC/DASH"
 rate = grlcprice/dashprice
 cursor.execute(sql, (pair,rate,))
@@ -28,3 +33,12 @@ cursor.execute(sql, (pair,rate,))
 pair = "DASH/GRLC"
 rate = dashprice/grlcprice
 cursor.execute(sql, (pair,rate,))
+
+pair = "GRLC/LTC"
+rate = grlcprice/ltcprice
+cursor.execute(sql, (pair,rate,))
+
+pair = "LTC/GRLC"
+rate = ltcprice/grlcprice
+cursor.execute(sql, (pair,rate,))
+

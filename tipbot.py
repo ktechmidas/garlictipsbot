@@ -35,14 +35,21 @@ class tipbot():
 * balance - Will give you your current tips balance.\n
 * deposit - Will reply with an address which you can deposit garlicoin into.\n
 * withdraw [address] [amount] - Will withdraw the amount you request into the address you request.\n
-* tip [amount] [user] - Tips the user with the amount you request.\n\n
+* tip [amount] [user] - Tips the user with the amount you request.\n
 
+**We also support exchanging from and to LTC and Dash**\n
+* rates - Gives you the current rate from CMC, updates every hour.\n
+* exchange 10 GRLC to LTC - Exchanges 10 GRLC to LTC
+* exchange 10 GRLC to Dash - Exchanges 10 GRLC to Dash
+* exchange 0.01 LTC to GRLC - Exchanges 0.01 LTC to GRLC
+* deposit litecoin - The bot will reply to you with an LTC address for depositing (look for the capital L at the start rather than capital G, that's how you know it's an LTC address)
+* deposit dash - The bot will reply with a Dash address.\n\n
 To tip a user publicly use /u/garlictipsbot [amount] [user] in a reply.\n\n
 
 If you need any further assistance please PM my creator, /u/ktechmidas"""
 
     def reply_to_message(self,message,content):
-        pdb.set_trace()
+        #pdb.set_trace()
         if self.utils.config['other']['testmode']:
             self.logger.logline("TESTMODE MESSAGE: %s" % content)
             return 0
@@ -60,6 +67,8 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
     def blacklist_user(self,username):
         sql = "INSERT INTO blacklist (username) VALUES (%s)"
         self.cursor.execute(sql, (username,))
+	sql = "UPDATE withdraw SET confirmed=2 WHERE username=%s" 
+	self.cursor.execute(sql, (username,))
         self.utils.send_message(username,"Blacklisted","Dear %s, you have been blacklisted from using garlictipsbot due to suspicious behaviour. This means the bot will ignore any tips you give, and will not accept any deposits from you. If you believe this was in error please PM /u/ktechmidas\n\n**NOTE:** If you have a balance with the bot, you can still withdraw it the normal way." % username)
 
     def check_blacklist(self,username):
@@ -199,8 +208,8 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
 
     def new_withdrawal_request(self,username,address,amount,coin,bl):
         self.modify_user_balance("-",username,amount,coin)
-        sql = "INSERT INTO withdraw (username, address, amount, confirmed, coin) VALUES (%s, %s, %s, bl, %s)"
-        self.cursor.execute(sql, (username,address,amount,coin,))
+        sql = "INSERT INTO withdraw (username, address, amount, confirmed, coin) VALUES (%s, %s, %s, %s, %s)"
+        self.cursor.execute(sql, (username,address,amount,bl,coin,))
 
     def get_dash_for_user(self,username):
         sql = "SELECT * FROM amounts WHERE username=%s"
@@ -294,8 +303,8 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                     self.logger.logline("Processing mention: %s by %s" % (mention.id,mention.author)) 
                     self.process_mention(mention)
                 except:
-                    self.reddit.comment(id=mention.id).reply("Oops, something went wrong. Do you have an account with the bot? If not send 'signup' to me by PM. If you do have an account I may be having issues, please try again later.")
-                    #traceback.print_exc()
+                    #self.reddit.comment(id=mention.id).reply("Oops, something went wrong. Do you have an account with the bot? If not send 'signup' to me by PM. If you do have an account I may be having issues, please try again later.")
+                    traceback.print_exc()
         if not self.utils.config['other']['testmode']:
             self.reddit.inbox.mark_read(unread)
         del unread[:] #Probably not needed after the recode, since it's a local var, but still good to clean up I suppose....
@@ -317,7 +326,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         #print('{}\n{}\n'.format(mention.author, mention.body))
         self.logger.logline('{}\n{}\n'.format(mention.author, mention.body))
         todo = mention.body.split()
-        pdb.set_trace()
+        #pdb.set_trace()
         try:
             needle = todo.index("/u/garlictipsbot") #Need to find this in multiple ways, currently tripping on u/ and capital letters.
         except:
@@ -457,10 +466,12 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
 
             if crypto_from == "GRLC":
                 balance = self.get_amount_for_user(author)
+		if crypto_to == "LTC":
+			crypto_to="litecoin"
                 if balance+Decimal(0.1) > amount:
                     self.modify_user_balance('-',author,amount)
                     self.modify_user_balance('+',author,amttoconvertto,crypto_to)
-                    self.reply_to_message(message,"Hi, your %s GRLC has successfully been converted to %s Dash at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas" % (amount,amttoconvertto,rate))
+                    self.reply_to_message(message,"Hi, your %s GRLC has successfully been converted to %s %s at a rate of %s. If there are any issues with this or the amounts don't look correct, please PM /u/ktechmidas" % (amount,amttoconvertto,crypto_to,rate))
             elif crypto_from == "DASH":
                 balance = self.get_dash_for_user(author)
                 if balance+Decimal(0.00001) > amount:

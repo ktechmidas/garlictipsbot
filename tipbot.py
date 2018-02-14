@@ -510,18 +510,26 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         #Alright, here's where things get a little fun/messy. 
         unread = []
         for indmessage in self.reddit.inbox.messages(limit=10):
-            pdb.set_trace()
             if indmessage.author == 'garlictipsbot':
-                unread.append(indmessage)
                 print "Dont reply to self, silly bot"
             else:
                 try:
-                    command = indmessage.body
-                    if not ' ' in command:
-                        #If there's only one word it's an information command, eg deposit/balance/help
-                        self.process_command(indmessage,command)
+                    sql = "SELECT COUNT(*) FROM processed WHERE pmid=%s"
+                    self.cursor.execute(sql,(indmessage.id,))
+                    result = self.cursor.fetchone()
+                    if result[0] != 0:
+                        print "Aleady processed %s" % indmessage.id
                     else:
-                        self.process_multi_command(indmessage,command)
+                        sql = "INSERT INTO processed WHERE pmid=%s"
+                        self.cursor.execute(sql,(indmessage.id,))
+
+                        command = indmessage.body
+                        if not ' ' in command:
+                            #If there's only one word it's an information command, eg deposit/balance/help
+                            self.process_command(indmessage,command)
+                        else:
+                            self.process_multi_command(indmessage,command)
+                
                 except Exception as ex:
                     print("Something went wrong processing commands...skipping this one")
                     #print(ex)

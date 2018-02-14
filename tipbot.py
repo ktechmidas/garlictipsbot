@@ -519,8 +519,9 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                     result = self.cursor.fetchone()
                     if result[0] != 0:
                         print "Aleady processed %s" % indmessage.id
+                        break
                     else:
-                        sql = "INSERT INTO processed WHERE pmid=%s"
+                        sql = "INSERT INTO processed VALUES (%s)"
                         self.cursor.execute(sql,(indmessage.id,))
 
                         command = indmessage.body

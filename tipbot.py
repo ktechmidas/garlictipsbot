@@ -509,7 +509,7 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
     def check_messages(self):
         #Alright, here's where things get a little fun/messy. 
         unread = []
-        for indmessage in self.reddit.inbox.messages(limit=10):
+        for indmessage in self.reddit.inbox.messages(limit=20):
             if indmessage.author == 'garlictipsbot':
                 print "Dont reply to self, silly bot"
             else:
@@ -519,7 +519,21 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                     result = self.cursor.fetchone()
                     if result[0] != 0:
                         print "Aleady processed %s" % indmessage.id
-                        break
+                        #Fuck everything about this, TODO: someone want to help me rework this?
+                        for r in indmessage.replies:
+                            if r.author != "garlictipsbot":
+                                sql = "SELECT COUNT(*) FROM processed WHERE pmid=%s"
+                                self.cursor.execute(sql,(r.id,))
+                                if result[0] == 0:
+                                    sql = "INSERT INTO processed VALUES (%s)"
+                                    self.cursor.execute(sql,(r.id,))
+
+                                    command = r.body
+                                    if not ' ' in command:
+                                        #If there's only one word it's an information command, eg deposit/balance/help
+                                        self.process_command(r,command)
+                                    else:
+                                        self.process_multi_command(r,command)
                     else:
                         sql = "INSERT INTO processed VALUES (%s)"
                         self.cursor.execute(sql,(indmessage.id,))

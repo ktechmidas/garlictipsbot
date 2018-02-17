@@ -25,8 +25,8 @@ class deposit():
         me = reddit.user.me()
 
     def all_deposits(self,coin):
-        sql = "SELECT * FROM deposits WHERE coin='%s'" % coin
-        self.cursor.execute(sql)
+        sql = "SELECT * FROM deposits WHERE coin='%s'"
+        self.cursor.execute(sql, (coin,))
         return self.cursor.fetchall()
 
     def get_amount_from_json(self,raw_tx,tx_in_db):

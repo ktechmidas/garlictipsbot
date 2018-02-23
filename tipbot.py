@@ -271,13 +271,20 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
                 receiver = msgsplit[2]
             except:
                 message.reply("Hi, the bot did not understand your request. Please send tips in the format 'tip amount user' as a new message, without the quotes.")
+                return 1
 
             #Ensure our decimal is *not* a negative number.
             if addamt < 0:
                 message.reply("You tried to use a negative number, you'll make people sad if you steal their precious garlic...")
                 self.logger.logline("%s tried to use a negative number!" % (author))
                 return 1
-        
+
+            #Make sure we're not sending our precious GRLC to nobody
+            if not self.check_redditor_exists(receiver):
+                self.logger.logline('%s tried to tip %s but there is no user by that name' % (author, receiver))
+                message.reply('You tried to tip /u/%s, but there is no user by that name.' % (receiver))
+                return 1
+
             bank = self.get_amount_for_user(author)
             self.give_user_the_tip_pm(self,sender,receiver,addamt,bank,mention) #o.o
 

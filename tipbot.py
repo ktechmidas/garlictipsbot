@@ -172,6 +172,14 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
     def get_new_address(self,username):
         return subprocess.check_output(shlex.split('/home/monotoko/garlic/garlicoin/bin/garlicoin-cli getnewaddress %s' % (username)))
 
+    def check_redditor_exists(self,redditor):
+        try:
+            fullname = self.reddit.redditor(redditor).fullname
+            return True
+        except prawcore.exceptions.NotFound:
+            self.logger.logline('{} tried to tip {} but there is no user by that name'.format(sender, receiver))
+            return False
+
     def process_mention(self,mention):
         #print('{}\n{}\n'.format(mention.author, mention.body))
         self.logger.logline('{}\n{}\n'.format(mention.author, mention.body))
@@ -185,12 +193,15 @@ If you need any further assistance please PM my creator, /u/ktechmidas"""
         if receiver.count("/u/") == 1:
             receiver = receiver.replace(receiver[:3],'')
 
-        try:
-            fullname = self.reddit.redditor(receiver).fullname
-        except prawcore.exceptions.NotFound:
-            self.logger.logline('{} tried to tip {} but there is no user by that name'.format(sender, receiver))
+        #Make sure we're not sending our precious GRLC to nobody
+        if not self.check_redditor_exists(receiver):
+            self.logger.logline('%s tried to tip %s but there is no user by that name' % (sender, receiver))
+            try:
+                self.reddit.comment(id=mention.id).reply("You tried to tip /u/%s, but that user doesn't exist.\n***\n^^Wow ^^so ^^tasty ^^|| ^^I ^^now ^^support ^^exchange ^^from ^^and ^^to ^^other ^^cryptos [^^click ^^here](https://www.reddit.com/r/garlicoin/comments/7wehii/ugarlictipsbot_a_giveaway_important_news/) ^^|| [^^Need ^^help?](https://www.reddit.com/message/compose/?to=garlictipsbot&subject=help&message=help) ^^|| [^^Dogecoin ^^partnership ^^coming ^^soon](https://np.reddit.com/r/garlicoin/comments/7u0z1w/garlictipsbot_recodeopen_sourceimportant_news/)" % (receiver))
+            except:
+                self.logger.logline("Reddit doesn't seem to be responding right now...died on comment for existing user.")
             return
-            
+
         addamt = Decimal(addamt)
 
         bank = self.get_amount_for_user(sender)

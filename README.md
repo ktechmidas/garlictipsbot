@@ -1,3 +1,8 @@
+# This tipsbot is dead
+
+V2 coming soon
+
+
 # garlictipsbot
 Garlicoin tipbot built in Python. Probably ready for production use, but I'd give it a few days. Recoded from the ground up, this is version 2. Version 1 will never be spoken of again.
 
